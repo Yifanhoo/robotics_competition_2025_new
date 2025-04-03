@@ -145,7 +145,7 @@ int over_point = 0;
 int intersection_point = 0;
 int on_point_flag = 0;
 
-int task_list[30];
+int task_list[20];
 int i = 0;
 void Chassis_Move()
 {
