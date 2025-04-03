@@ -1,6 +1,7 @@
 #include "Chassis.h"
 #include "alg.h"
 #include "motor.h"
+#include "sensor.h"
 
 #define CONST_CHASSIS_FORWARDBACK_SPEED_MAX     1 //chassis 前后最快速度
 #define CONST_CHASSIS_LEFTRIGHT_SPEED_MAX       1 //chassis 左右最快速度
@@ -34,7 +35,16 @@ void Chassis_CalcMecanumRef();
 void Chassis_Move();
 void Chassis_Turn();
 
-
+// 如果没有定义 HAL_TICK 函数，添加一个简单实现
+#ifndef HAL_TICK_DEFINED
+#define HAL_TICK_DEFINED
+unsigned int HAL_TICK(void)
+{
+    // 返回系统时钟，实际项目中应替换为实际的时钟函数
+    // 例如，在 STM32 上可以使用 HAL_GetTick()
+    return 0;
+}
+#endif
 
 void Chassis_Init()
 {
@@ -121,22 +131,16 @@ void Follow_line()
     
     if(sense_intersection_p())
         return;
-    int a;
-    // 4,5 是中间、1，2，3是偏右、 6，7，8是偏左
-    //if 偏右 one = a; a = 1,2,3
-    if(/*偏右 */a < 4)
-    {
-        PID_SetRef(&chassis->angle_pid, 0);
-        PID_SetFdb(&chassis->angle_pid, a-4);
-        PID_Calc(&chassis->angle_pid, &chassis->angle_pidparram);
-    }
-    else /*偏左*/
-    {
-        PID_SetRef(&chassis->angle_pid, 0);
-        PID_SetFdb(&chassis->angle_pid, 5-a);
-        PID_Calc(&chassis->angle_pid, &chassis->angle_pidparram);
-    }
+        
+    // 使用传感器模块提供的偏差值
+    float deviation = Sensor_GetDeviation();
     
+    // 设置 PID 控制器参数
+    PID_SetRef(&chassis->angle_pid, 0);  // 目标是无偏差（居中）
+    PID_SetFdb(&chassis->angle_pid, deviation);
+    PID_Calc(&chassis->angle_pid, &chassis->angle_pidparram);
+    
+    // 将 PID 输出设置为旋转速度
     chassis->rotate_speed = chassis->angle_pid.output;
 }
 
