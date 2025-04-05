@@ -134,12 +134,14 @@ static void ConvertMissionToChassis(MissionType_t mission_type)
             break;
         case MISSION_TURN_LEFT:
         case MISSION_TURN_RIGHT:
-            Chassis.act = TURN;
-            // 设置转向方向
-            if (mission_type == MISSION_TURN_LEFT)
+            // 根据任务类型设置转向方向
+            if (mission_type == MISSION_TURN_LEFT) {
+                Chassis.act = TURN_LEFT;
                 Chassis.rotate_speed = -300; // 负值表示左转
-            else
+            } else {
+                Chassis.act = TURN_RIGHT;
                 Chassis.rotate_speed = 300;  // 正值表示右转
+            }
             break;
         case MISSION_STOP:
             Chassis.act = STOP;
