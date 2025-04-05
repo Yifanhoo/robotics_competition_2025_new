@@ -7,6 +7,10 @@
 // 任务队列最大长度
 #define MAX_MISSION_QUEUE 20
 
+// 火种位置数组
+static FirePosition_t fire_positions[MAX_FIRE_POSITIONS];
+static int num_fire_positions = 0;
+
 // 测距传感器参数
 #define DISTANCE_DETECT_THRESHOLD  300  // 物体检测阈值，单位毫米
 #define DISTANCE_GRAB_MIN          50   // 最小抓取距离，单位毫米
@@ -473,4 +477,43 @@ void Mission_SetDefaultSequence(void)
     
     // 停止
     Mission_Add(MISSION_STOP, 0);
+}
+
+// 设置火种位置
+void Mission_SetFirePosition(int index, double x, double y) {
+    if (index >= 0 && index < MAX_FIRE_POSITIONS) {
+        fire_positions[index].x = x;
+        fire_positions[index].y = y;
+        fire_positions[index].is_occupied = 0;
+        if (index >= num_fire_positions) {
+            num_fire_positions = index + 1;
+        }
+    }
+}
+
+// 清除所有火种位置
+void Mission_ClearFirePositions(void) {
+    num_fire_positions = 0;
+    for (int i = 0; i < MAX_FIRE_POSITIONS; i++) {
+        fire_positions[i].is_occupied = 0;
+    }
+}
+
+// 获取下一个可用的火种位置
+int Mission_GetNextAvailableFirePosition(double *x, double *y) {
+    for (int i = 0; i < num_fire_positions; i++) {
+        if (!fire_positions[i].is_occupied) {
+            *x = fire_positions[i].x;
+            *y = fire_positions[i].y;
+            return i;
+        }
+    }
+    return -1;  // 没有可用的火种位置
+}
+
+// 标记火种位置已被占用
+void Mission_MarkFirePositionOccupied(int index) {
+    if (index >= 0 && index < num_fire_positions) {
+        fire_positions[index].is_occupied = 1;
+    }
 }

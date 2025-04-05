@@ -7,7 +7,7 @@ Sensor_t Sensor;
 
 // 循迹传感器状态定义
 #define WHITE_LINE   1           // 循迹线 - 传感器位于白线上时的返回值
-#define BLACK_BACKGROUND 0       // 背景 - 传感器位于赛道背景时的返回值
+#define GREEN_BACKGROUND 0       // 背景 - 传感器位于绿色赛道背景时的返回值
 
 // 超声波传感器阈值配置（单位：mm）
 #define DISTANCE_DETECT_THRESHOLD  300  // 物体检测阈值
@@ -19,11 +19,17 @@ Sensor_t Sensor;
 
 // 传感器状态判定阈值
 #define CROSS_SENSOR_THRESHOLD     6    // 判定为十字路口的最小传感器数
-#define END_SENSOR_THRESHOLD      8    // 判定为终点的传感器数（全部检测到白线）
 
-// 电池相关阈值
-#define BATTERY_LOW_THRESHOLD 11.5  // 电池低电压阈值（伏特）
-#define MAX_RETRY_COUNT 3          // 最大重试次数
+// 系统时间相关定义
+#define SYSTEM_TICK_MS 10        // 系统时钟周期（毫秒）
+#define TASK_DEFAULT_TIMEOUT 30000 // 默认任务超时时间（30秒）
+#define ERROR_RECOVERY_TIMEOUT 5000 // 错误恢复超时时间（5秒）
+
+// 安全相关定义
+#define SAFE_DISTANCE_MIN 50      // 安全距离最小值（毫米）
+#define SAFE_DISTANCE_MAX 500     // 安全距离最大值（毫米）
+#define MAX_SPEED_FACTOR 1.0      // 最大速度因子
+#define MIN_SPEED_FACTOR 0.3      // 最小速度因子
 
 // 传感器状态定义
 #define TASK_IDLE 0
@@ -54,21 +60,10 @@ static const GridPosition_t flame_positions[GRID_POINTS] = {
     {3, 3}  // O
 };
 
-// 系统时间相关定义
-#define SYSTEM_TICK_MS 10        // 系统时钟周期（毫秒）
-#define TASK_DEFAULT_TIMEOUT 30000 // 默认任务超时时间（30秒）
-#define ERROR_RECOVERY_TIMEOUT 5000 // 错误恢复超时时间（5秒）
-
 // 电池相关定义
 #define BATTERY_FULL_VOLTAGE 12.6   // 满电电压
 #define BATTERY_EMPTY_VOLTAGE 11.0  // 空电电压
 #define EMERGENCY_STOP_VOLTAGE 10.8  // 紧急停止电压
-
-// 安全相关定义
-#define SAFE_DISTANCE_MIN 50      // 安全距离最小值（毫米）
-#define SAFE_DISTANCE_MAX 500     // 安全距离最大值（毫米）
-#define MAX_SPEED_FACTOR 1.0      // 最大速度因子
-#define MIN_SPEED_FACTOR 0.3      // 最小速度因子
 
 // 外部硬件接口函数声明
 extern char Read_IO1(void);  // 最左
@@ -112,7 +107,6 @@ void Sensor_Init(void)
     Sensor.task_state = TASK_IDLE;
     Sensor_InitFlamePoints();
     Sensor.team_color = 0;  // 默认为红队
-    Sensor.is_auto = 0;     // 默认为手动模式
 }
 
 /**
@@ -156,9 +150,7 @@ TrackStatus_t Sensor_GetTrackStatus(void)
     // 状态判断逻辑
     if(active_count == 0) {
         return TRACK_STATUS_LOST;  // 没有传感器检测到线
-    } else if(active_count >= END_SENSOR_THRESHOLD) {
-        return TRACK_STATUS_END;   // 全部或几乎全部传感器检测到白线，可能是终点
-    } else if(active_count >= CROSS_SENSOR_THRESHOLD) {
+    } else if(Sensor_IsCrossing()) {
         return TRACK_STATUS_CROSS; // 多个传感器检测到线，可能是十字路口
     }
     
@@ -479,14 +471,6 @@ void Sensor_SetTeamColor(int is_blue)
 }
 
 /**
- * 设置自动/手动模式
- */
-void Sensor_SetAutoMode(int is_auto)
-{
-    Sensor.is_auto = is_auto;
-}
-
-/**
  * 检查火种位置是否有效
  */
 int Sensor_IsValidFlamePoint(char point_id)
@@ -780,22 +764,6 @@ uint32_t Sensor_GetTimeSinceLastError(void)
 }
 
 /**
- * 获取电池电量百分比
- */
-float Sensor_GetBatteryPercentage(void)
-{
-    float voltage = Sensor_GetBatteryVoltage();
-    float percentage = (voltage - BATTERY_EMPTY_VOLTAGE) / 
-                      (BATTERY_FULL_VOLTAGE - BATTERY_EMPTY_VOLTAGE) * 100.0f;
-    
-    if (percentage > 100.0f) percentage = 100.0f;
-    if (percentage < 0.0f) percentage = 0.0f;
-    
-    Sensor.battery_percentage = percentage;
-    return percentage;
-}
-
-/**
  * 获取系统运行时间（毫秒）
  */
 uint32_t Sensor_GetOperationTime(void)
@@ -819,11 +787,6 @@ void Sensor_ResetStatistics(void)
  */
 int Sensor_IsSafeToMove(void)
 {
-    // 检查电池电量
-    if (Sensor_GetBatteryVoltage() <= EMERGENCY_STOP_VOLTAGE) {
-        return 0;
-    }
-    
     // 检查障碍物
     if (Sensor.distance_mm < SAFE_DISTANCE_MIN) {
         return 0;
@@ -844,7 +807,6 @@ int Sensor_IsSafeToMove(void)
 int Sensor_IsSafeToGrab(void)
 {
     return (Sensor_IsGrabbable() && 
-            Sensor_GetGripperStatus() == 0 &&  // 假设0表示机械爪就绪
             Sensor.error_status == ERROR_NONE);
 }
 
@@ -853,8 +815,7 @@ int Sensor_IsSafeToGrab(void)
  */
 int Sensor_IsEmergencyStop(void)
 {
-    return (Sensor_GetBatteryVoltage() <= EMERGENCY_STOP_VOLTAGE ||
-            Sensor.error_status >= ERROR_CRITICAL);
+    return (Sensor.error_status >= ERROR_CRITICAL);
 }
 
 /**
@@ -1005,25 +966,16 @@ float Sensor_GetBatteryVoltage(void)
 }
 
 /**
- * 检查电池是否低电量
+ * 判断是否为十字路口
  */
-int Sensor_IsBatteryLow(void)
-{
-    return (Sensor_GetBatteryVoltage() < BATTERY_LOW_THRESHOLD);
-}
-
-/**
- * 获取电机状态
- */
-int Sensor_GetMotorStatus(void)
-{
-    return Read_MotorStatus();
-}
-
-/**
- * 获取机械爪状态
- */
-int Sensor_GetGripperStatus(void)
-{
-    return Read_GripperStatus();
+int Sensor_IsCrossing(void) {
+    int white_count = 0;
+    for(int i = 0; i < 8; i++) {
+        if(Sensor.sensor[i] == WHITE_LINE) {
+            white_count++;
+        }
+    }
+    
+    // 检测到足够多的白线即为十字路口
+    return (white_count >= CROSS_SENSOR_THRESHOLD);
 }

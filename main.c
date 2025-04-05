@@ -65,6 +65,21 @@ void test_arm_inverse_kinematics(void) {
     }
 }
 
+// 设置火种位置
+void setup_fire_positions(void) {
+    printf("\n===== 设置火种位置 =====\n");
+    
+    // 清除之前的火种位置
+    Mission_ClearFirePositions();
+    
+    // 设置火种位置（示例坐标，需要根据实际情况调整）
+    Mission_SetFirePosition(0, 200.0, 150.0);  // 第一个火种位置
+    Mission_SetFirePosition(1, 300.0, 150.0);  // 第二个火种位置
+    Mission_SetFirePosition(2, 400.0, 150.0);  // 第三个火种位置
+    
+    printf("火种位置设置完成\n");
+}
+
 // 演示：设置机械臂任务序列
 void setup_arm_mission_sequence(void) {
     printf("\n===== 设置机械臂任务序列 =====\n");
@@ -76,17 +91,17 @@ void setup_arm_mission_sequence(void) {
     printf("添加任务: 机械臂回到初始位置\n");
     Mission_Add(MISSION_ARM_HOME, 0);
     
-    printf("添加任务: 移动到抓取位置\n");
-    Mission_Add(MISSION_ARM_GRAB, 0);
+    // 获取下一个可用的火种位置
+    double fire_x, fire_y;
+    int fire_index = Mission_GetNextAvailableFirePosition(&fire_x, &fire_y);
     
-    printf("添加任务: 执行抓取\n");
-    Mission_Add(MISSION_GRAB, 0);
-    
-    printf("添加任务: 前进循迹\n");
-    Mission_Add(MISSION_FOLLOW_LINE, 1);
-    
-    printf("添加任务: 停止\n");
-    Mission_Add(MISSION_STOP, 0);
+    if (fire_index >= 0) {
+        printf("添加任务: 前往火种位置 (%.1f, %.1f)\n", fire_x, fire_y);
+        Mission_AddWithPosition(MISSION_GOTO_FIRE, fire_x, fire_y);
+        
+        printf("添加任务: 放置火种\n");
+        Mission_Add(MISSION_PLACE_FIRE, fire_index);
+    }
     
     printf("添加任务: 机械臂移动到指定位置\n");
     Mission_AddWithPosition(MISSION_ARM_MOVE_TO, 150.0, 100.0);
@@ -107,6 +122,9 @@ int main() {
     
     // 初始化系统
     Mission_Init();
+    
+    // 设置火种位置
+    setup_fire_positions();
     
     // 测试机械臂逆运动学
     test_arm_inverse_kinematics();

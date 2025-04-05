@@ -58,8 +58,7 @@ typedef enum {
 typedef enum {
     TRACK_STATUS_NORMAL = 0,    // 正常循迹（在直线上）
     TRACK_STATUS_LOST = 1,      // 丢线
-    TRACK_STATUS_CROSS = 2,     // 十字路口
-    TRACK_STATUS_END = 3        // 终点（全白）
+    TRACK_STATUS_CROSS = 2      // 十字路口
 } TrackStatus_t;
 
 // 网格位置结构体
@@ -122,7 +121,6 @@ typedef struct
     TaskState_t task_state;   // 当前任务状态
     FlamePoint_t flames[GRID_POINTS];  // 火种位置信息
     int team_color;           // 队伍颜色(0:红队, 1:蓝队)
-    int is_auto;             // 是否为自动模式
     Path_t current_path;         // 当前规划路径
     ErrorStatus_t error_status;  // 错误状态
     int retry_count;            // 重试计数
@@ -131,7 +129,6 @@ typedef struct
     uint32_t last_error_time;   // 上次错误发生时间
     uint32_t operation_time;    // 系统运行时间
     int total_flames_collected; // 已收集的火种总数
-    float battery_percentage;   // 电池电量百分比
 } Sensor_t;
 
 // 基础函数

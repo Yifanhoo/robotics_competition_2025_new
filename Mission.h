@@ -1,6 +1,16 @@
 #ifndef MISSION_H
 #define MISSION_H
 
+// 火种位置最大数量
+#define MAX_FIRE_POSITIONS 8
+
+// 火种位置结构体
+typedef struct {
+    double x;
+    double y;
+    int is_occupied;  // 是否已被占用
+} FirePosition_t;
+
 // 任务类型定义
 typedef enum {
     MISSION_NONE = 0,
@@ -15,6 +25,8 @@ typedef enum {
     MISSION_ARM_RELEASE,     // 机械臂释放
     MISSION_ARM_HOME,        // 机械臂回到初始位置
     MISSION_ARM_REST,        // 机械臂回到休息位置
+    MISSION_GOTO_FIRE,      // 前往火种位置
+    MISSION_PLACE_FIRE,     // 放置火种
     MISSION_MAX
 } MissionType_t;
 
