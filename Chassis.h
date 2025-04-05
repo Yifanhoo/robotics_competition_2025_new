@@ -13,6 +13,7 @@ typedef enum
     TURN_LEFT     = 3,
     GRAB    = 4,
     PUT     = 5,
+    END     = 6,
 
 }Chassis_Action;
 
