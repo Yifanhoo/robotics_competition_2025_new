@@ -82,7 +82,7 @@ int Mission_Add(MissionType_t type, int param)
 }
 
 // 添加带位置参数的任务到队列
-void Mission_AddWithPosition(MissionType_t type, double x, double y)
+void Mission_AddWithPosition(MissionType_t type, double x, double y, FireColor_t color)
 {
     if (mission_queue_size < MAX_MISSION_QUEUE)
     {
@@ -91,6 +91,7 @@ void Mission_AddWithPosition(MissionType_t type, double x, double y)
         mission_queue[mission_queue_size].completed = 0;
         mission_queue[mission_queue_size].param_x = x;
         mission_queue[mission_queue_size].param_y = y;
+        mission_queue[mission_queue_size].color = color;
         mission_queue_size++;
     }
 }
@@ -133,12 +134,14 @@ static void ConvertMissionToChassis(MissionType_t mission_type)
             break;
         case MISSION_TURN_LEFT:
         case MISSION_TURN_RIGHT:
-            Chassis.act = TURN;
-            // 设置转向方向
-            if (mission_type == MISSION_TURN_LEFT)
+            // 根据任务类型设置转向方向
+            if (mission_type == MISSION_TURN_LEFT) {
+                Chassis.act = TURN_LEFT;
                 Chassis.rotate_speed = -300; // 负值表示左转
-            else
+            } else {
+                Chassis.act = TURN_RIGHT;
                 Chassis.rotate_speed = 300;  // 正值表示右转
+            }
             break;
         case MISSION_STOP:
             Chassis.act = STOP;
@@ -257,7 +260,7 @@ static int HandleArmTask(Mission_t *mission)
         switch (mission->type)
         {
             case MISSION_ARM_MOVE_TO:
-                Arm_MoveTo(mission->param_x, mission->param_y);
+                Arm_MoveTo(mission->param_x, mission->param_y, 0.0);  // 在2D平面上操作，z设为0
                 break;
                 
             case MISSION_ARM_GRAB:

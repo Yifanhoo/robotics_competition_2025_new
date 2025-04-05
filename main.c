@@ -4,6 +4,12 @@
 #include "sensor.h"
 #include "arm.h"
 #include "servo.h"
+#include "sensor_types.h"
+
+// 外部变量声明
+extern int current_mission_index;
+extern int mission_queue_size;
+extern unsigned int system_time;
 
 int Read_Ultrasonic(void) { return 200; } // 模拟200mm距离
 
@@ -20,7 +26,6 @@ void Servo_HardwareSetPulse(int channel, double pulse_width) {
 }
 
 // HAL时钟模拟函数
-static unsigned int system_time = 0;
 unsigned int HAL_TICK(void) {
     return system_time;
 }
@@ -44,7 +49,7 @@ void test_arm_inverse_kinematics(void) {
         
         printf("目标位置 (%.1f, %.1f): ", x, y);
         
-        ArmAngles_t angles = Arm_CalculateAngles(x, y);
+        ArmAngles_t angles = Arm_Calculate2DAngles(x, y);
         
         if (angles.reachable) {
             printf("可达, 角度: theta1=%.2f°, theta2=%.2f°\n", 
@@ -64,9 +69,9 @@ void setup_fire_positions(void) {
     Mission_ClearFirePositions();
     
     // 设置火种位置（示例坐标，需要根据实际情况调整）
-    Mission_SetFirePosition(0, 200.0, 150.0);  // 第一个火种位置
-    Mission_SetFirePosition(1, 300.0, 150.0);  // 第二个火种位置
-    Mission_SetFirePosition(2, 400.0, 150.0);  // 第三个火种位置
+    Mission_SetFirePosition(0, 200.0, 150.0, FIRE_COLOR_RED);   // 第一个火种位置
+    Mission_SetFirePosition(1, 300.0, 150.0, FIRE_COLOR_BLUE);  // 第二个火种位置
+    Mission_SetFirePosition(2, 400.0, 150.0, FIRE_COLOR_RED);   // 第三个火种位置
     
     printf("火种位置设置完成\n");
 }
@@ -88,14 +93,14 @@ void setup_arm_mission_sequence(void) {
     
     if (fire_index >= 0) {
         printf("添加任务: 前往火种位置 (%.1f, %.1f)\n", fire_x, fire_y);
-        Mission_AddWithPosition(MISSION_GOTO_FIRE, fire_x, fire_y);
+        Mission_AddWithPosition(MISSION_GOTO_FIRE, fire_x, fire_y, Mission_GetFireColor(fire_index));
         
         printf("添加任务: 放置火种\n");
         Mission_Add(MISSION_PLACE_FIRE, fire_index);
     }
     
     printf("添加任务: 机械臂移动到指定位置\n");
-    Mission_AddWithPosition(MISSION_ARM_MOVE_TO, 150.0, 100.0);
+    Mission_AddWithPosition(MISSION_ARM_MOVE_TO, 150.0, 100.0, FIRE_COLOR_NONE);
     
     printf("添加任务: 释放物体\n");
     Mission_Add(MISSION_ARM_RELEASE, 0);

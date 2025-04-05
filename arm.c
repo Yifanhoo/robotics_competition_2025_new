@@ -534,7 +534,7 @@ void Arm_MoveToGrabPosition(void)
     Sensor_ReadDistance();
     
     // 计算物体位置，默认在机器人前方
-    double distance = Sensor.distance_mm;
+    double distance = SensorSystem.range_finder.distance_mm;
     
     // 限制抓取距离在有效范围内
     if (distance < DISTANCE_GRAB_MIN) {

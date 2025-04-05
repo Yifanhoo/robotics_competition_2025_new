@@ -14,7 +14,8 @@ typedef enum {
     DIRECTION_FORWARD,
     DIRECTION_BACKWARD,
     DIRECTION_LEFT,
-    DIRECTION_RIGHT
+    DIRECTION_RIGHT,
+    DIRECTION_CENTER  // 添加中心方向
 } Direction_t;
 
 // 朝向枚举
@@ -79,9 +80,9 @@ typedef enum {
 
 // 火种颜色枚举
 typedef enum {
-    FLAME_COLOR_NONE = 0,
-    FLAME_COLOR_RED,
-    FLAME_COLOR_BLUE
+    FLAME_NONE = 0,
+    FLAME_RED,
+    FLAME_BLUE
 } FlameColor_t;
 
 // 火种点结构体
@@ -89,6 +90,7 @@ typedef struct {
     GridPosition_t position;
     FlameColor_t color;
     int is_collected;
+    char id;  // 火种点ID（A-O）
 } FlamePoint_t;
 
 // 循迹传感器结构体
