@@ -33,6 +33,16 @@ typedef enum {
 
 static GrabState_t grab_state = GRAB_STATE_INIT;
 
+// 方向枚举
+typedef enum {
+    DIRECTION_NONE = 0,
+    DIRECTION_FORWARD,
+    DIRECTION_BACKWARD,
+    DIRECTION_LEFT,
+    DIRECTION_RIGHT,
+    DIRECTION_CENTER  // 添加这个值
+} Direction_t;
+
 // 任务系统初始化
 void Mission_Init(void)
 {
@@ -56,17 +66,19 @@ void Mission_Init(void)
 }
 
 // 添加任务到队列
-void Mission_Add(MissionType_t type, int param)
+int Mission_Add(MissionType_t type, int param)
 {
-    if (mission_queue_size < MAX_MISSION_QUEUE)
+    if (mission_queue_size >= MAX_MISSION_QUEUE)
     {
-        mission_queue[mission_queue_size].type = type;
-        mission_queue[mission_queue_size].param = param;
-        mission_queue[mission_queue_size].completed = 0;
-        mission_queue[mission_queue_size].param_x = 0.0;
-        mission_queue[mission_queue_size].param_y = 0.0;
-        mission_queue_size++;
+        return -1;  // 队列已满
     }
+    mission_queue[mission_queue_size].type = type;
+    mission_queue[mission_queue_size].param = param;
+    mission_queue[mission_queue_size].completed = 0;
+    mission_queue[mission_queue_size].param_x = 0.0;
+    mission_queue[mission_queue_size].param_y = 0.0;
+    mission_queue_size++;
+    return 0;  // 成功
 }
 
 // 添加带位置参数的任务到队列
@@ -179,7 +191,7 @@ static int HandleGrabState(void)
                     Chassis.act = STOP;
                     grab_state = GRAB_STATE_ADJUSTING;
                 }
-                else if(Sensor.distance_mm < DISTANCE_GRAB_MIN)
+                else if(SensorSystem.range_finder.distance_mm < DISTANCE_GRAB_MIN)
                 {
                     // 太近了，需要后退
                     Chassis.act = MOVE;
@@ -480,11 +492,13 @@ void Mission_SetDefaultSequence(void)
 }
 
 // 设置火种位置
-void Mission_SetFirePosition(int index, double x, double y) {
+void Mission_SetFirePosition(int index, double x, double y, FireColor_t color) {
     if (index >= 0 && index < MAX_FIRE_POSITIONS) {
         fire_positions[index].x = x;
         fire_positions[index].y = y;
+        fire_positions[index].color = color;
         fire_positions[index].is_occupied = 0;
+        fire_positions[index].is_collected = 0;
         if (index >= num_fire_positions) {
             num_fire_positions = index + 1;
         }
@@ -496,13 +510,17 @@ void Mission_ClearFirePositions(void) {
     num_fire_positions = 0;
     for (int i = 0; i < MAX_FIRE_POSITIONS; i++) {
         fire_positions[i].is_occupied = 0;
+        fire_positions[i].is_collected = 0;
+        fire_positions[i].color = FIRE_COLOR_NONE;
     }
 }
 
 // 获取下一个可用的火种位置
 int Mission_GetNextAvailableFirePosition(double *x, double *y) {
     for (int i = 0; i < num_fire_positions; i++) {
-        if (!fire_positions[i].is_occupied) {
+        // 只要火种存在且未被收集就可以获取
+        if (!fire_positions[i].is_collected && 
+            fire_positions[i].color != FIRE_COLOR_NONE) {
             *x = fire_positions[i].x;
             *y = fire_positions[i].y;
             return i;
@@ -511,9 +529,39 @@ int Mission_GetNextAvailableFirePosition(double *x, double *y) {
     return -1;  // 没有可用的火种位置
 }
 
-// 标记火种位置已被占用
-void Mission_MarkFirePositionOccupied(int index) {
+// 标记火种位置已被收集
+void Mission_MarkFirePositionCollected(int index) {
     if (index >= 0 && index < num_fire_positions) {
-        fire_positions[index].is_occupied = 1;
+        fire_positions[index].is_collected = 1;
     }
+}
+
+// 获取指定位置的火种颜色
+FireColor_t Mission_GetFireColor(int index) {
+    if (index >= 0 && index < num_fire_positions) {
+        return fire_positions[index].color;
+    }
+    return FIRE_COLOR_NONE;
+}
+
+// 获取已收集的火种数量
+int Mission_GetCollectedFireCount(void) {
+    int count = 0;
+    for (int i = 0; i < num_fire_positions; i++) {
+        if (fire_positions[i].is_collected) {
+            count++;
+        }
+    }
+    return count;
+}
+
+// 获取特定颜色的已收集火种数量
+int Mission_GetCollectedFireCountByColor(FireColor_t color) {
+    int count = 0;
+    for (int i = 0; i < num_fire_positions; i++) {
+        if (fire_positions[i].is_collected && fire_positions[i].color == color) {
+            count++;
+        }
+    }
+    return count;
 }
