@@ -5,15 +5,6 @@
 #include "arm.h"
 #include "servo.h"
 
-// 定义外部传感器读取函数（在实际项目中需要实现）
-char Read_IO1(void) { return 0; }
-char Read_IO2(void) { return 0; }
-char Read_IO3(void) { return 0; }
-char Read_IO4(void) { return 0; }
-char Read_IO5(void) { return 0; }
-char Read_IO6(void) { return 0; }
-char Read_IO7(void) { return 0; }
-char Read_IO8(void) { return 0; }
 int Read_Ultrasonic(void) { return 200; } // 模拟200mm距离
 
 // 物体检测传感器模拟函数
