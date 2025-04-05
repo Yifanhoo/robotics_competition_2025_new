@@ -23,8 +23,8 @@ const float motor3_speed_const = 1.0f;  // 左后轮速度常数
 const float motor4_speed_const = 1.0f;  // 右后轮速度常数
 
 // 待调
-float chassis_anglePIDparram[5] = {0, 0, 0, 0, 0};
-float chassis_speedPIDparram[5] = {0, 0, 0, 0, 0};
+float chassis_Rotate_anglePIDparram[5] = {0, 0, 0, 0, 0};       //旋转的角度pid     fdb：巡线sensor
+float chassis_Moving_distancePIDparram[5] = {0, 0, 0, 0, 0};    //前进的距离pid     fdb：测距sensor
 
 
 void Chassis_Init();
@@ -44,6 +44,8 @@ void Chassis_CalcMecanumRef();
 void Chassis_Move();
 void Follow_line();
 void Chassis_Turn();
+void Chassis_Grab();
+void Chassis_Put();
 
 // 如果没有定义 HAL_TICK 函数，添加一个简单实现
 #ifndef HAL_TICK_DEFINED
@@ -74,10 +76,10 @@ void Chassis_Init()
     chassis->rotate_speed = 0;
 
 
-    PID_ClearData(&chassis->angle_pid);
-    PID_ClearData(&chassis->speed_pid);
-    PID_ArrayParamInit(&chassis->angle_pidparram, chassis_anglePIDparram);
-    PID_ArrayParamInit(&chassis->speed_pidparram, chassis_speedPIDparram);
+    PID_ClearData(&chassis->rotate_angle_pid);
+    PID_ClearData(&chassis->moving_distance_pid);
+    PID_ArrayParamInit(&chassis->rotate_angle_pidparram, chassis_Rotate_anglePIDparram);
+    PID_ArrayParamInit(&chassis->moving_distace_pidparram, chassis_Moving_distancePIDparram);
 }
 
 void Chassis_Task()
@@ -103,28 +105,24 @@ void Chassis_Control()
         break;
     case MOVE:
         Chassis_Move();
-        Chassis_SetForwardBackRef(chassis->moving_speed);
-        Chassis_SetRotateRef(chassis->rotate_speed);
         break;
     case TURN_RIGHT:
         Chassis_Turn();
-        Chassis_SetForwardBackRef(chassis->moving_speed);
-        Chassis_SetRotateRef(chassis->rotate_speed);
         break;
     case TURN_LEFT:
         Chassis_Turn();
-        Chassis_SetForwardBackRef(chassis->moving_speed);
-        Chassis_SetRotateRef(chassis->rotate_speed);
     case GRAB:
-        /* code */
+        Chassis_Grab();
         break;
     case PUT:
-        /* code */
+        Chassis_Put();
         break;
     
     default:
         break;
     }
+    Chassis_SetForwardBackRef(chassis->moving_speed);
+    Chassis_SetRotateRef(chassis->rotate_speed);
 
     Chassis_CalcMecanumRef();
 }
@@ -134,10 +132,22 @@ void Chassis_Output()
     Chassis_t *chassis = &Chassis;
     if(chassis->output_state != 1)
         return;
-        
+    
+    //待调
     //四个motor 的 pwm output
 }
 
+void Chassis_Grab()
+{
+    Follow_line();
+    
+    //发送信息给机械臂stm32
+}
+
+void Chassis_Put()
+{
+    //发送信息给机械臂stm32
+}
 
 void Follow_line()
 {
@@ -150,12 +160,12 @@ void Follow_line()
     float deviation = Sensor_GetDeviation();
     
     // 设置 PID 控制器参数
-    PID_SetRef(&chassis->angle_pid, 0);  // 目标是无偏差（居中）
-    PID_SetFdb(&chassis->angle_pid, deviation);
-    PID_Calc(&chassis->angle_pid, &chassis->angle_pidparram);
+    PID_SetRef(&chassis->rotate_angle_pid, 0);  // 目标是无偏差（居中）
+    PID_SetFdb(&chassis->rotate_angle_pid, deviation);
+    PID_Calc(&chassis->rotate_angle_pid, &chassis->rotate_angle_pidparram);
     
     // 将 PID 输出设置为旋转速度
-    chassis->rotate_speed = chassis->angle_pid.output;
+    chassis->rotate_speed = chassis->rotate_angle_pid.output;
 }
 
 

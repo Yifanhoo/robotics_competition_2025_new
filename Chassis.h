@@ -31,10 +31,10 @@ typedef struct
     Chassis_Ref_t last_raw_ref;
     // Chassis_Ref_t raw_speed_ref;
     Motor_t motors[4];
-    PID_PIDTypeDef angle_pid;
-    PID_PIDTypeDef speed_pid;
-    PID_PIDParamTypeDef angle_pidparram;
-    PID_PIDParamTypeDef speed_pidparram;
+    PID_PIDTypeDef rotate_angle_pid;
+    PID_PIDTypeDef moving_distance_pid;
+    PID_PIDParamTypeDef rotate_angle_pidparram;
+    PID_PIDParamTypeDef moving_distace_pidparram;
     char control_state;
     char output_state;
     char pending_state;
