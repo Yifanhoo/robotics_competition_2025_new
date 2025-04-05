@@ -90,6 +90,7 @@ typedef struct {
     GridPosition_t position;
     FlameColor_t color;
     int is_collected;
+    char id;  // 火种点ID（A-O）
 } FlamePoint_t;
 
 // 循迹传感器结构体

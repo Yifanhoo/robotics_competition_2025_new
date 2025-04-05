@@ -46,6 +46,7 @@ typedef struct {
     int completed;  // 任务完成标志
     double param_x; // 位置参数X（用于ARM_MOVE_TO任务）
     double param_y; // 位置参数Y（用于ARM_MOVE_TO任务）
+    FireColor_t color; // 火种颜色参数
 } Mission_t;
 
 // 全局变量声明

@@ -332,7 +332,7 @@ Direction_t Sensor_GetTurnDirection(GridPosition_t target)
 void Sensor_InitFlamePoints(void)
 {
     for(int i = 0; i < GRID_POINTS; i++) {
-        SensorSystem.flame_manager.flames[i].point_id = 'A' + i;
+        SensorSystem.flame_manager.flames[i].id = 'A' + i;
         SensorSystem.flame_manager.flames[i].color = FLAME_NONE;
         SensorSystem.flame_manager.flames[i].is_collected = 0;
     }
@@ -363,7 +363,7 @@ void Sensor_SetTeamColor(int is_blue)
 FlamePoint_t* Sensor_GetNearestFlame(void)
 {
     FlamePoint_t* nearest = NULL;
-    int min_distance = GRID_SIZE * 2;  // 最大可能距离
+    int min_distance = GRID_SIZE_X * 2;  // 最大可能距离
     
     for(int i = 0; i < GRID_POINTS; i++) {
         if(SensorSystem.flame_manager.flames[i].is_collected || 
