@@ -8,7 +8,8 @@
 #define CONST_CHASSIS_LEFTRIGHT_SPEED_MAX       1 //chassis 左右最快速度
 #define CONST_CHASSIS_ROTATE_SPEED_MAX          1    //chassis 旋转最快速度
 
-Chassis_t Chassis;
+Chassis_t Chassis; 
+Chassis_Action Task_list[100];      //待调（之后要删掉用hanz那边的）
 
 //待调
 float gyro1 = 1.04f;        
@@ -74,6 +75,7 @@ void Chassis_Init()
     chassis->last_raw_ref.rotate     = 0;
     chassis->moving_speed = 0;
     chassis->rotate_speed = 0;
+    chassis->task_i = 0;
 
 
     PID_ClearData(&chassis->rotate_angle_pid);
@@ -111,6 +113,7 @@ void Chassis_Control()
         break;
     case TURN_LEFT:
         Chassis_Turn();
+        break;
     case GRAB:
         Chassis_Grab();
         break;
@@ -170,8 +173,6 @@ void Follow_line()
 
 
 int on_point_flag = 0;
-int task_list[20];
-int i = 0;
 void Chassis_Move()
 {
     Chassis_t *chassis = &Chassis;
@@ -191,7 +192,7 @@ void Chassis_Move()
         on_point_flag = 1;
 
         chassis->rotate_speed = 0;
-        chassis->act = task_list[++i];
+        chassis->act = Task_list[++(chassis->task_i)];
     }
     else
     {
@@ -212,7 +213,7 @@ void Chassis_Turn()
 
     if(func1())     //lzy chassis自转检测到目标线（maybe 左边的sensor or 右边的sensor 一检测到，就return 1）
     {
-        task_list[++i];
+        Task_list[++(chassis->task_i)];
     }
     
 }

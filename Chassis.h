@@ -40,11 +40,13 @@ typedef struct
     char pending_state;
     float moving_speed;     //move forward恒定速度
     float rotate_speed;
+    int task_i;
     float last_time;
 
 }Chassis_t;
 
 
 extern Chassis_t Chassis;
+extern Chassis_Action Task_list[100]; 
 
 #endif /* CHASSIS_H */
