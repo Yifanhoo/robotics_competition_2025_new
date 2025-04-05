@@ -39,7 +39,7 @@ void Sensor_Init(void)
     // 初始化循迹传感器
     memset(SensorSystem.line_tracker.sensors, 0, sizeof(SensorSystem.line_tracker.sensors));
     SensorSystem.line_tracker.cross_count = 0;
-    SensorSystem.line_tracker.last_turn = DIRECTION_CENTER;
+    SensorSystem.line_tracker.last_turn = DIRECTION_NONE;
     
     // 初始化激光测距传感器
     SensorSystem.range_finder.distance_mm = 0;
@@ -51,7 +51,7 @@ void Sensor_Init(void)
     SensorSystem.navigation.heading = HEADING_SOUTH;
     
     // 初始化任务管理器
-    SensorSystem.task_manager.task_state = TASK_IDLE;
+    SensorSystem.task_manager.task_state = TASK_STATE_IDLE;
     SensorSystem.task_manager.error_status = ERROR_NONE;
     SensorSystem.task_manager.retry_count = 0;
     
@@ -443,8 +443,6 @@ ErrorStatus_t Sensor_GetErrorStatus(void)
 {
     return SensorSystem.task_manager.error_status;
 }
-
-
 
 /**
  * 重置错误状态

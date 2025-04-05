@@ -4,11 +4,20 @@
 // 火种位置最大数量
 #define MAX_FIRE_POSITIONS 8
 
+// 火种颜色定义
+typedef enum {
+    FIRE_COLOR_NONE = 0,
+    FIRE_COLOR_RED,
+    FIRE_COLOR_BLUE
+} FireColor_t;
+
 // 火种位置结构体
 typedef struct {
     double x;
     double y;
-    int is_occupied;  // 是否已被占用
+    FireColor_t color;       // 火种颜色
+    int is_occupied;         // 是否已被占用
+    int is_collected;        // 是否已被收集
 } FirePosition_t;
 
 // 任务类型定义
@@ -47,5 +56,14 @@ void Mission_AddWithPosition(MissionType_t type, double x, double y);
 void Mission_Start(void);
 void Mission_Stop(void);
 int Mission_IsCompleted(void);
+
+// 火种相关函数
+void Mission_SetFirePosition(int index, double x, double y, FireColor_t color);
+void Mission_ClearFirePositions(void);
+int Mission_GetNextAvailableFirePosition(double *x, double *y);
+void Mission_MarkFirePositionCollected(int index);
+FireColor_t Mission_GetFireColor(int index);
+int Mission_GetCollectedFireCount(void);
+int Mission_GetCollectedFireCountByColor(FireColor_t color);
 
 #endif /* MISSION_H */
