@@ -48,11 +48,15 @@ typedef struct {
     double param_y; // 位置参数Y（用于ARM_MOVE_TO任务）
 } Mission_t;
 
+// 全局变量声明
+extern int current_mission_index;
+extern int mission_queue_size;
+
 // 函数声明
 void Mission_Init(void);
 void Mission_Task(void);
-void Mission_Add(MissionType_t type, int param);
-void Mission_AddWithPosition(MissionType_t type, double x, double y);
+int Mission_Add(MissionType_t type, int param);
+void Mission_AddWithPosition(MissionType_t type, double x, double y, FireColor_t color);
 void Mission_Start(void);
 void Mission_Stop(void);
 int Mission_IsCompleted(void);

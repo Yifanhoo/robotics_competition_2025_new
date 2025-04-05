@@ -1,4 +1,5 @@
 #include "sensor.h"
+#include "sensor_types.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -209,7 +210,7 @@ int Sensor_NeedAdjustPosition(void)
  */
 void Sensor_SetPosition(int x, int y)
 {
-    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+    if (x >= 0 && x < GRID_SIZE_X && y >= 0 && y < GRID_SIZE_Y) {
         SensorSystem.navigation.position.x = x;
         SensorSystem.navigation.position.y = y;
     }
@@ -275,60 +276,54 @@ void Sensor_UpdatePosition(Direction_t turn)
     }
     
     // 检查新位置是否有效
-    if (new_x >= 0 && new_x < GRID_SIZE && new_y >= 0 && new_y < GRID_SIZE) {
+    if (new_x >= 0 && new_x < GRID_SIZE_X && new_y >= 0 && new_y < GRID_SIZE_Y) {
         SensorSystem.navigation.position.x = new_x;
         SensorSystem.navigation.position.y = new_y;
     }
 }
 
 /**
- * 计算到达目标位置需要的转向
+ * 获取转向方向
  */
 Direction_t Sensor_GetTurnDirection(GridPosition_t target)
 {
-    // 检查目标位置是否有效
-    if (target.x < 0 || target.x >= GRID_SIZE || 
-        target.y < 0 || target.y >= GRID_SIZE) {
-        return DIRECTION_CENTER;
-    }
-    
-    // 计算位置差
+    // 计算相对位置
     int dx = target.x - SensorSystem.navigation.position.x;
     int dy = target.y - SensorSystem.navigation.position.y;
     
-    // 如果已经到达目标位置
     if (dx == 0 && dy == 0) {
-        return DIRECTION_CENTER;
+        return DIRECTION_NONE;  // 已在目标位置
     }
     
-    // 根据当前朝向和目标位置计算需要的转向
+    // 根据当前朝向和目标位置计算转向
     switch (SensorSystem.navigation.heading) {
         case HEADING_NORTH:
-            if (dy < 0) return DIRECTION_CENTER;  // 已经朝向目标
-            if (dx > 0) return DIRECTION_RIGHT;   // 需要向右转
-            if (dx < 0) return DIRECTION_LEFT;    // 需要向左转
-            return DIRECTION_RIGHT;               // 需要掉头，先右转
+            if (dy > 0) return DIRECTION_NONE;  // 正前方
+            if (dx > 0) return DIRECTION_RIGHT;
+            if (dx < 0) return DIRECTION_LEFT;
+            return DIRECTION_BACKWARD;
             
         case HEADING_EAST:
-            if (dx > 0) return DIRECTION_CENTER;  // 已经朝向目标
-            if (dy > 0) return DIRECTION_RIGHT;   // 需要向右转
-            if (dy < 0) return DIRECTION_LEFT;    // 需要向左转
-            return DIRECTION_RIGHT;               // 需要掉头，先右转
+            if (dx > 0) return DIRECTION_NONE;  // 正前方
+            if (dy < 0) return DIRECTION_RIGHT;
+            if (dy > 0) return DIRECTION_LEFT;
+            return DIRECTION_BACKWARD;
             
         case HEADING_SOUTH:
-            if (dy > 0) return DIRECTION_CENTER;  // 已经朝向目标
-            if (dx < 0) return DIRECTION_RIGHT;   // 需要向右转
-            if (dx > 0) return DIRECTION_LEFT;    // 需要向左转
-            return DIRECTION_RIGHT;               // 需要掉头，先右转
+            if (dy < 0) return DIRECTION_NONE;  // 正前方
+            if (dx < 0) return DIRECTION_RIGHT;
+            if (dx > 0) return DIRECTION_LEFT;
+            return DIRECTION_BACKWARD;
             
         case HEADING_WEST:
-            if (dx < 0) return DIRECTION_CENTER;  // 已经朝向目标
-            if (dy < 0) return DIRECTION_RIGHT;   // 需要向右转
-            if (dy > 0) return DIRECTION_LEFT;    // 需要向左转
-            return DIRECTION_RIGHT;               // 需要掉头，先右转
+            if (dx < 0) return DIRECTION_NONE;  // 正前方
+            if (dy > 0) return DIRECTION_RIGHT;
+            if (dy < 0) return DIRECTION_LEFT;
+            return DIRECTION_BACKWARD;
+            
+        default:
+            return DIRECTION_NONE;
     }
-    
-    return DIRECTION_CENTER;  // 默认不转向
 }
 
 /**

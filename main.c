@@ -4,6 +4,11 @@
 #include "sensor.h"
 #include "arm.h"
 #include "servo.h"
+#include "sensor_types.h"
+
+// 外部变量声明
+extern int current_mission_index;
+extern int mission_queue_size;
 
 int Read_Ultrasonic(void) { return 200; } // 模拟200mm距离
 
@@ -64,9 +69,9 @@ void setup_fire_positions(void) {
     Mission_ClearFirePositions();
     
     // 设置火种位置（示例坐标，需要根据实际情况调整）
-    Mission_SetFirePosition(0, 200.0, 150.0);  // 第一个火种位置
-    Mission_SetFirePosition(1, 300.0, 150.0);  // 第二个火种位置
-    Mission_SetFirePosition(2, 400.0, 150.0);  // 第三个火种位置
+    Mission_SetFirePosition(0, 200.0, 150.0, FIRE_RED);   // 第一个火种位置
+    Mission_SetFirePosition(1, 300.0, 150.0, FIRE_BLUE);  // 第二个火种位置
+    Mission_SetFirePosition(2, 400.0, 150.0, FIRE_RED);   // 第三个火种位置
     
     printf("火种位置设置完成\n");
 }
