@@ -3,23 +3,26 @@
 #include "motor.h"
 #include "sensor.h"
 
+//待调
 #define CONST_CHASSIS_FORWARDBACK_SPEED_MAX     1 //chassis 前后最快速度
 #define CONST_CHASSIS_LEFTRIGHT_SPEED_MAX       1 //chassis 左右最快速度
 #define CONST_CHASSIS_ROTATE_SPEED_MAX          1    //chassis 旋转最快速度
 
 Chassis_t Chassis;
 
-float gyro1 = 1.04f;
+//待调
+float gyro1 = 1.04f;        
 float gyro2 = 1.04f;
 float gyro3 = 0.86f;
 float gyro4 = 0.86f;
 
+//待调
 const float motor1_speed_const = 1.0f;  // 左前轮速度常数
 const float motor2_speed_const = 1.0f;  // 右前轮速度常数 
 const float motor3_speed_const = 1.0f;  // 左后轮速度常数
 const float motor4_speed_const = 1.0f;  // 右后轮速度常数
 
-
+// 待调
 float chassis_anglePIDparram[5] = {0, 0, 0, 0, 0};
 float chassis_speedPIDparram[5] = {0, 0, 0, 0, 0};
 
@@ -39,6 +42,7 @@ void Chassis_SetStopRef();
 void Chassis_ClearChassisRef(Chassis_Ref_t *pref);
 void Chassis_CalcMecanumRef();
 void Chassis_Move();
+void Follow_line();
 void Chassis_Turn();
 
 // 如果没有定义 HAL_TICK 函数，添加一个简单实现
@@ -66,7 +70,9 @@ void Chassis_Init()
     chassis->last_raw_ref.front_back = 0;
     chassis->last_raw_ref.left_right = 0;
     chassis->last_raw_ref.rotate     = 0;
-    chassis->moving_speed = 300;
+    chassis->moving_speed = 0;
+    chassis->rotate_speed = 0;
+
 
     PID_ClearData(&chassis->angle_pid);
     PID_ClearData(&chassis->speed_pid);
@@ -100,11 +106,15 @@ void Chassis_Control()
         Chassis_SetForwardBackRef(chassis->moving_speed);
         Chassis_SetRotateRef(chassis->rotate_speed);
         break;
-    case TURN:
+    case TURN_RIGHT:
         Chassis_Turn();
         Chassis_SetForwardBackRef(chassis->moving_speed);
         Chassis_SetRotateRef(chassis->rotate_speed);
         break;
+    case TURN_LEFT:
+        Chassis_Turn();
+        Chassis_SetForwardBackRef(chassis->moving_speed);
+        Chassis_SetRotateRef(chassis->rotate_speed);
     case GRAB:
         /* code */
         break;
@@ -128,14 +138,12 @@ void Chassis_Output()
     //四个motor 的 pwm output
 }
 
-int sense_intersection_p();
-void Follow_line();
 
 void Follow_line()
 {
     Chassis_t *chassis = &Chassis;
     
-    if(sense_intersection_p())
+    if(Sensor_IsAtCross())
         return;
         
     // 使用传感器模块提供的偏差值
@@ -150,11 +158,8 @@ void Follow_line()
     chassis->rotate_speed = chassis->angle_pid.output;
 }
 
-int sensor_count = 2;
-int over_point = 0;
-int intersection_point = 0;
-int on_point_flag = 0;
 
+int on_point_flag = 0;
 int task_list[20];
 int i = 0;
 void Chassis_Move()
@@ -165,33 +170,41 @@ void Chassis_Move()
 
     //跟线走 用pid 算rotate的速度ref
     Follow_line();
+    chassis->moving_speed = 100;        //待调
 
     //when检测到在交点上的时候，
         //if 现在还要继续move forward，我给rotate的速度ref = 0，等过了这个交点再用Follow_line()的rotate ref
         //else if 已经要turn or stop or grab等等，i++代表要跳到下一个任务
-    if(sense_intersection_p() && on_point_flag == 0 && HAL_TICK()-chassis->last_time >= 100)
+    if(Sensor_IsAtCross() && (HAL_TICK() - chassis->last_time) >= 100 && on_point_flag == 0)
     {   
         chassis->last_time = HAL_TICK();
         on_point_flag = 1;
 
-        if(over_point != intersection_point)
-        {
-            over_point++;
-            chassis->rotate_speed = 0;
-        }
-        else if(over_point == intersection_point)
-        {
-            over_point = 0;
-            i++;
-            chassis->act = task_list[i];
-        }
+        chassis->rotate_speed = 0;
+        chassis->act = task_list[++i];
     }
     else
     {
         on_point_flag = 0;
     }
-        
+}
 
+
+int func1();
+void Chassis_Turn()
+{
+    Chassis_t *chassis = &Chassis;
+
+    chassis->moving_speed = 0;
+    chassis->rotate_speed = 100;    //待调
+    if(chassis->act == TURN_RIGHT)
+        chassis->rotate_speed*=-1;
+
+    if(func1())     //lzy chassis自转检测到目标线（maybe 左边的sensor or 右边的sensor 一检测到，就return 1）
+    {
+        task_list[++i];
+    }
+    
 }
 
 

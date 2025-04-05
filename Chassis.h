@@ -9,9 +9,10 @@ typedef enum
 {
     STOP    = 0,
     MOVE    = 1,
-    TURN    = 2,
-    GRAB    = 3,
-    PUT     = 4,
+    TURN_RIGHT    = 2,
+    TURN_LEFT     = 3,
+    GRAB    = 4,
+    PUT     = 5,
 
 }Chassis_Action;
 
