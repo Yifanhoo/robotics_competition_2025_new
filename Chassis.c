@@ -14,6 +14,12 @@ float gyro2 = 1.04f;
 float gyro3 = 0.86f;
 float gyro4 = 0.86f;
 
+const float motor1_speed_const = 1.0f;  // 左前轮速度常数
+const float motor2_speed_const = 1.0f;  // 右前轮速度常数 
+const float motor3_speed_const = 1.0f;  // 左后轮速度常数
+const float motor4_speed_const = 1.0f;  // 右后轮速度常数
+
+
 float chassis_anglePIDparram[5] = {0, 0, 0, 0, 0};
 float chassis_speedPIDparram[5] = {0, 0, 0, 0, 0};
 
@@ -255,8 +261,8 @@ void Chassis_CalcMecanumRef()
     motor_realspeed[2] = +chassis->raw_ref.front_back - chassis->raw_ref.left_right +chassis->raw_ref.rotate;
     motor_realspeed[3] = +chassis->raw_ref.front_back + chassis->raw_ref.left_right +chassis->raw_ref.rotate;
 
-    chassis->motors[0].speed_ref = motor_realspeed[0];
-    chassis->motors[1].speed_ref = motor_realspeed[1];
-    chassis->motors[2].speed_ref = motor_realspeed[2];
-    chassis->motors[3].speed_ref = motor_realspeed[3];
+    chassis->motors[0].speed_ref = motor_realspeed[0] * motor1_speed_const;
+    chassis->motors[1].speed_ref = motor_realspeed[1] * motor2_speed_const;
+    chassis->motors[2].speed_ref = motor_realspeed[2] * motor3_speed_const;
+    chassis->motors[3].speed_ref = motor_realspeed[3] * motor4_speed_const;
 }
