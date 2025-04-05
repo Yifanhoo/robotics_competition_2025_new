@@ -60,10 +60,6 @@ static const GridPosition_t flame_positions[GRID_POINTS] = {
     {3, 3}  // O
 };
 
-// 电池相关定义
-#define BATTERY_FULL_VOLTAGE 12.6   // 满电电压
-#define BATTERY_EMPTY_VOLTAGE 11.0  // 空电电压
-#define EMERGENCY_STOP_VOLTAGE 10.8  // 紧急停止电压
 
 // 外部硬件接口函数声明
 extern char Read_IO1(void);  // 最左
